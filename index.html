@@ -375,11 +375,9 @@ function fechaCorta(iso){
 
 /* ===================== Descarga de datos oficiales ===================== */
 var BASE = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres";
-// Bizkaia = 48, Gipuzkoa = 20, Araba = 01, Cantabria = 39, Burgos = 09.
-// Se intenta primero la provincia (respuesta pequeña) y, si falla, el listado nacional.
+  
 var FUENTES = [
-  { url: BASE + "/FiltroProvincia/48", desc: "Bizkaia" },
-  { url: BASE + "/",                   desc: "España entera" }
+  { url: BASE + "/", desc: "España entera" }
 ];
 
 function normaliza(registro){
@@ -1008,8 +1006,7 @@ function pedirUbicacion(){
     guardarPrefs();
     restaurarBotonUbicacion();
     document.getElementById("posicionTexto").textContent = estado.nombreLugar;
-    registrarHistorico();
-    renderTodo();
+    cargarEstaciones();
   }, function(){
     restaurarBotonUbicacion();
     ubicacionAproximada("permiso denegado");

@@ -1101,6 +1101,13 @@ document.addEventListener("visibilitychange", function () {
   }
 });
 
+  /* Actualización automática de noticias */
+setInterval(function () {
+  if (!document.hidden) {
+    cargarNoticias();
+  }
+}, 30 * 60 * 1000); // cada 30 minutos
+
 /* ===================== Arranque ===================== */
 function renderTodo(){
   renderRanking();

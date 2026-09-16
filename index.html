@@ -1086,6 +1086,21 @@ document.getElementById("btnRecargarNoticias").addEventListener("click", functio
   });
 });
 
+  /* Actualización automática de precios */
+var INTERVALO_PRECIOS_MS = 10 * 60 * 1000; // cada 10 minutos
+
+setInterval(function () {
+  if (!document.hidden && !estado.cargando) {
+    cargarEstaciones();
+  }
+}, INTERVALO_PRECIOS_MS);
+
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden && !estado.cargando) {
+    cargarEstaciones(); // refresca al volver a abrir la pestaña
+  }
+});
+
 /* ===================== Arranque ===================== */
 function renderTodo(){
   renderRanking();

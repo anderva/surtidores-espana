@@ -1175,27 +1175,48 @@ function renderMapa(){
 
   var puntos = [];
 
-  estado.estaciones.forEach(function(e){
-    var precio = e[prefs.fuel];
-    if(precio === null) return;
+  var puntos = [];
 
-    var distancia = distanciaKm(estado.lat, estado.lng, e.lat, e.lng);
-    if(distancia > prefs.radio) return;
+/* Estaciones dentro del radio y con precio disponible */
+var cercanas = estado.estaciones.filter(function(e){
+  return e[prefs.fuel] !== null &&
+    distanciaKm(estado.lat, estado.lng, e.lat, e.lng) <= prefs.radio;
+});
 
-    L.circleMarker([e.lat, e.lng], {
-      radius: 8,
-      color: "#fff",
-      fillColor: "#1D63B8",
-      fillOpacity: 1,
-      weight: 2
-    }).bindPopup(
-      "<b>" + e.rotulo + "</b><br>" +
-      e.dir + "<br>" +
-      eur(precio) + " €/L · " + km(distancia)
-    ).addTo(capaMarcadores);
+/* Precios ordenados para decidir verde, amarillo o rojo */
+var precios = cercanas.map(function(e){
+  return e[prefs.fuel];
+}).sort(function(a, b){
+  return a - b;
+});
 
-    puntos.push([e.lat, e.lng]);
-  });
+var limiteBarato = precios[Math.floor((precios.length - 1) / 3)];
+var limiteCaro = precios[Math.ceil((precios.length - 1) * 2 / 3)];
+
+function colorPrecio(precio){
+  if(precio <= limiteBarato) return "#0E8A5F"; /* verde: barato */
+  if(precio >= limiteCaro) return "#C8412B";   /* rojo: caro */
+  return "#F2B705";                            /* amarillo: intermedio */
+}
+
+cercanas.forEach(function(e){
+  var precio = e[prefs.fuel];
+  var distancia = distanciaKm(estado.lat, estado.lng, e.lat, e.lng);
+
+  L.circleMarker([e.lat, e.lng], {
+    radius: 8,
+    color: "#fff",
+    fillColor: colorPrecio(precio),
+    fillOpacity: 1,
+    weight: 2
+  }).bindPopup(
+    "<b>" + e.rotulo + "</b><br>" +
+    e.dir + "<br>" +
+    eur(precio) + " €/L · " + km(distancia)
+  ).addTo(capaMarcadores);
+
+  puntos.push([e.lat, e.lng]);
+});
 
   puntos.push([estado.lat, estado.lng]);
 

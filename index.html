@@ -1071,7 +1071,7 @@ document.getElementById("radio").addEventListener("input", function(){
   prefs.radio = parseInt(this.value, 10);
   document.getElementById("radioValor").textContent = prefs.radio + " km";
   guardarPrefs();
-  renderRanking();
+  renderTodo();
 });
 
 document.getElementById("orden").addEventListener("change", function(){
@@ -1208,7 +1208,7 @@ function renderMapa(){
 
 /* ===================== Arranque ===================== */
 function renderTodo(){
-  renderTodo();
+  renderRanking();
   renderMapa();
   renderGrafico();
   renderTendencia();

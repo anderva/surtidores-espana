@@ -18,7 +18,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+  crossorigin="">
 <style>
+.mapa-panel { margin: 22px 0; }
+#mapaGasolineras { height: 420px; width: 100%; }
+@media (max-width: 600px) {
+  #mapaGasolineras { height: 340px; }
+}
 :root{
   --azul-900:#07213F;
   --azul-700:#0E3C73;
@@ -248,12 +256,19 @@ ol.ranking li:first-child .precio-col .p{color:var(--naranja)}
         <option value="distancia">Distancia más corta</option>
       </select>
     </div>
-
+    
     <div class="acciones">
       <button class="btn" id="btnUbicacion">◎ Usar mi ubicación</button>
       <button class="btn btn-naranja" id="btnActualizar">↻ Actualizar precios</button>
     </div>
   </div>
+  <section class="panel mapa-panel" aria-labelledby="tituloMapa">
+  <div class="panel-cab">
+    <h2 id="tituloMapa">Gasolineras cerca de ti</h2>
+    <p id="subtituloMapa">Cargando mapa…</p>
+  </div>
+  <div id="mapaGasolineras"></div>
+</section>
 
   <div class="columnas">
 
@@ -311,7 +326,9 @@ ol.ranking li:first-child .precio-col .p{color:var(--naranja)}
     Ministerio para la Transición Ecológica y el Reto Demográfico. Datos abiertos, sin clave de acceso.
   </p>
 </main>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+  crossorigin=""></script>
 <script>
 (function(){
 "use strict";
@@ -1127,9 +1144,72 @@ setInterval(function () {
   }
 }, 30 * 60 * 1000); // cada 30 minutos
 
+var mapa = null;
+var capaMarcadores = null;
+
+function renderMapa(){
+  if(!window.L) return;
+
+  if(!mapa){
+    mapa = L.map("mapaGasolineras").setView([estado.lat, estado.lng], 13);
+
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapa);
+  }
+
+  if(capaMarcadores) mapa.removeLayer(capaMarcadores);
+  capaMarcadores = L.layerGroup().addTo(mapa);
+
+  L.circleMarker([estado.lat, estado.lng], {
+    radius: 9,
+    color: "#07213F",
+    fillColor: "#F26522",
+    fillOpacity: 1,
+    weight: 3
+  }).bindPopup("<b>Tu ubicación</b>").addTo(capaMarcadores);
+
+  var puntos = [];
+
+  estado.estaciones.forEach(function(e){
+    var precio = e[prefs.fuel];
+    if(precio === null) return;
+
+    var distancia = distanciaKm(estado.lat, estado.lng, e.lat, e.lng);
+    if(distancia > prefs.radio) return;
+
+    L.circleMarker([e.lat, e.lng], {
+      radius: 8,
+      color: "#fff",
+      fillColor: "#1D63B8",
+      fillOpacity: 1,
+      weight: 2
+    }).bindPopup(
+      "<b>" + e.rotulo + "</b><br>" +
+      e.dir + "<br>" +
+      eur(precio) + " €/L · " + km(distancia)
+    ).addTo(capaMarcadores);
+
+    puntos.push([e.lat, e.lng]);
+  });
+
+  puntos.push([estado.lat, estado.lng]);
+
+  if(puntos.length > 1){
+    mapa.fitBounds(puntos, { padding: [30, 30], maxZoom: 14 });
+  } else {
+    mapa.setView([estado.lat, estado.lng], 13);
+  }
+
+  document.getElementById("subtituloMapa").textContent =
+    (puntos.length - 1) + " estaciones en un radio de " + prefs.radio + " km";
+}
+
 /* ===================== Arranque ===================== */
 function renderTodo(){
-  renderRanking();
+  renderTodo();
+  renderMapa();
   renderGrafico();
   renderTendencia();
 }
